@@ -21,9 +21,7 @@
                 }
             },
             darkMode: 'class'
-        }
-    </script>
-    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@2.1.5/dist/tesseract.min.js"></script>
+        }    </script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -630,23 +628,281 @@
             appData.setScreenTime(30); // 30 minutes
             alert('Screen time unlocked for 30 minutes.');
         });
-        
-        unlock1day.addEventListener('click', () => {
+          unlock1day.addEventListener('click', () => {
             appData.setScreenTime(1440); // 24 hours (1440 minutes)
             alert('Screen time unlocked for 1 day.');
-        });
-
+        });        
+        
+        // Grok API Configuration
+        const GROK_API_KEY = 'xai-yqXlW5fWoLwMaRm9N7I4CJqhTmaJZOVDVuXSn7JmUWpI8F1GSWMHvwLqgG059J4LdZPr0BLkndHNY3mc';
+        const GROK_ENDPOINT = 'https://api.x.ai/v1/chat/completions';
+        
         // Event listeners for OCR functionality
         selectButton.addEventListener('click', () => fileInput.click());
         fileInput.addEventListener('change', handleFileSelect);
         dropArea.addEventListener('dragover', handleDragOver);
         dropArea.addEventListener('dragleave', handleDragLeave);
         dropArea.addEventListener('drop', handleDrop);
-        copyButton.addEventListener('click', copyToClipboard);
-        generateActionsButton.addEventListener('click', generateActionItems);
+        copyButton.addEventListener('click', copyToClipboard);        generateActionsButton.addEventListener('click', generateActionItems);
         copyChatButton.addEventListener('click', copyChatToClipboard);
         newImageButton.addEventListener('click', resetApp);
         sendToSectionsButton.addEventListener('click', sendActionItemsToSections);
+
+        // Process the image with OCR
+        async function processImage(file) {
+            // Hide error container if visible
+            errorContainer.classList.add('hidden');
+            
+            // Show image preview
+            const url = URL.createObjectURL(file);
+            imagePreview.src = url;
+            previewContainer.classList.remove('hidden');
+            
+            // Show processing indicator
+            processingIndicator.classList.remove('hidden');
+            progressBar.style.width = '20%';
+            progressText.textContent = 'Processing with Grok AI...';
+            
+            // Hide results if visible
+            resultsContainer.classList.add('hidden');
+            
+            try {
+                // Process with Grok OCR
+                progressBar.style.width = '50%';
+                const extractedText = await performGrokOCR(file);
+                
+                if (!extractedText || extractedText.trim() === '') {
+                    throw new Error('No text could be extracted from the image');
+                }
+                
+                // Display results
+                progressBar.style.width = '100%';
+                textOutput.textContent = extractedText;
+                resultsContainer.classList.remove('hidden');
+                copyButton.disabled = !extractedText.trim();
+                
+                // Hide processing indicator
+                processingIndicator.classList.add('hidden');
+                
+                // Scroll to results
+                resultsContainer.scrollIntoView({ behavior: 'smooth' });
+                
+            } catch (error) {
+                processingIndicator.classList.add('hidden');
+                showError(error.message);
+            }
+        }        // Process with Grok OCR
+        async function performGrokOCR(file) {
+            try {
+                // Convert image to base64
+                const base64Image = await new Promise((resolve) => {
+                    const reader = new FileReader();
+                    reader.onload = () => resolve(reader.result.split(',')[1]);
+                    reader.readAsDataURL(file);
+                });
+
+                const response = await fetch(GROK_ENDPOINT, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${GROK_API_KEY}`,
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },                    body: JSON.stringify({
+                        model: "grok-2-vision-1212",
+                        messages: [
+                            {
+                                role: "system",
+                                content: "You are a text extraction assistant. Your task is to carefully extract all text from images, preserving formatting and structure. Only output the extracted text, nothing else."
+                            },
+                            {
+                                role: "user",
+                                content: [
+                                    {
+                                        type: "text",
+                                        text: "Extract all text from this image. Maintain original formatting and structure:"
+                                    },
+                                    {
+                                        type: "image_url",
+                                        image_url: {
+                                            "url": `data:image/jpeg;base64,${base64Image}`
+                                        }
+                                    }
+                                ]
+                            }
+                        ],
+                        max_tokens: 2000,
+                        temperature: 0.2
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    console.error('Grok API Error:', errorData);
+                    throw new Error(errorData.error?.message || 'Failed to process image with Grok AI');
+                }
+
+                const result = await response.json();
+                if (!result.choices || !result.choices[0]?.message?.content) {
+                    throw new Error('Invalid response from Grok AI');
+                }
+                return result.choices[0].message.content;
+            } catch (error) {
+                console.error('OCR Error:', error);
+                throw new Error('Error processing image: ' + error.message);
+            }
+        }
+
+        // Generate action items using Grok AI
+        async function generateActionItemsWithGrok() {
+            try {
+                const extractedText = textOutput.textContent;
+                if (!extractedText) {
+                    throw new Error('No text available to analyze');
+                }
+
+                const response = await fetch(GROK_ENDPOINT, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${GROK_API_KEY}`,
+                        'Content-Type': 'application/json'
+                    },                    body: JSON.stringify({
+                        model: "grok-3-mini-fast",
+                        messages: [
+                            {
+                                role: "system",
+                                content: "You are a helpful assistant that analyzes text and extracts clear, actionable items. Format your response as a bullet-pointed list. Limit to 10 most important items. Be concise and clear."
+                            },
+                            {
+                                role: "user",
+                                content: `Please analyze this text and list the key action items:\n\n${extractedText}`
+                            }
+                        ]
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to analyze text with Grok AI');
+                }
+
+                const result = await response.json();
+                // Parse bullet points from the response
+                const actionItems = result.choices[0].message.content
+                    .split('\n')
+                    .filter(item => item.trim().match(/^[-•*]\s+/))
+                    .map(item => item.replace(/^[-•*]\s+/, '').trim());
+                
+                // Clear loading message
+                chatMessages.innerHTML = '';
+                
+                // Add each action item to chat
+                actionItems.forEach(item => {
+                    const messageDiv = document.createElement('div');
+                    messageDiv.className = 'bg-white dark:bg-gray-800 rounded-lg p-4 shadow';
+                    messageDiv.innerHTML = marked.parse(`- ${item}`);
+                    chatMessages.appendChild(messageDiv);
+                });
+
+                sendToSectionsButton.classList.remove('hidden');
+                return actionItems;
+                
+            } catch (error) {
+                throw new Error('Error generating action items: ' + error.message);
+            }
+        }
+        
+        // Generate action items from extracted text
+        async function generateActionItems() {
+            const extractedText = textOutput.textContent.trim();
+            if (!extractedText) {
+                showError('No text to generate action items from');
+                return;
+            }
+            
+            // Show processing indicator
+            processingIndicator.classList.remove('hidden');
+            progressBar.style.width = '30%';
+            progressText.textContent = 'Generating action items with Grok AI...';
+            
+            // Clear previous chat messages
+            chatMessages.innerHTML = '';
+            chatContainer.classList.add('hidden');
+            
+            try {
+                // Add initial message in chat
+                addChatMessage('teacher', 'Here are the action items from the document:');
+                
+                // Generate action items with Grok
+                const actionItems = await generateActionItemsWithGrok(extractedText);
+                
+                // Display action items in chat interface
+                displayActionItemsInChat(actionItems);
+                
+                // Show chat container and the send to sections button
+                chatContainer.classList.remove('hidden');
+                sendToSectionsButton.classList.remove('hidden');
+                chatContainer.scrollIntoView({ behavior: 'smooth' });
+                
+            } catch (error) {
+                processingIndicator.classList.add('hidden');
+                showError(error.message);
+            }
+        }
+        
+        // Update file handling function to use Grok OCR
+        async function handleFileSelect(event) {
+            const file = event.target?.files?.[0];
+            if (!file) return;
+            
+            try {
+                // Reset UI
+                resetError();
+                showProcessingUI();
+                
+                // Show image preview
+                const imageUrl = URL.createObjectURL(file);
+                imagePreview.src = imageUrl;
+                previewContainer.classList.remove('hidden');
+                
+                // Perform OCR with Grok
+                const extractedText = await performGrokOCR(file);
+                
+                // Show results
+                showResults(extractedText);
+                
+            } catch (error) {
+                showError(error.message);
+            } finally {
+                hideProcessingUI();
+            }
+        }
+
+        // Hide processing UI
+        function hideProcessingUI() {
+            processingIndicator.classList.add('hidden');
+            progressBar.style.width = '0%';
+            progressText.textContent = '';
+        }
+
+        // Reset error state
+        function resetError() {
+            errorContainer.classList.add('hidden');
+            errorMessage.textContent = '';
+        }
+        
+        // Show processing UI
+        function showProcessingUI() {
+            processingIndicator.classList.remove('hidden');
+            progressBar.style.width = '20%';
+            progressText.textContent = 'Processing with Grok AI...';
+        }
+
+        // Show results
+        function showResults(text) {
+            textOutput.textContent = text;
+            resultsContainer.classList.remove('hidden');
+            copyButton.disabled = !text.trim();
+            resultsContainer.scrollIntoView({ behavior: 'smooth' });
+        }
 
         // Update Student Tasks UI
         function updateStudentTasksUI() {
@@ -835,157 +1091,7 @@
             } else {
                 showError('Please upload an image file');
             }
-        }
-
-        // Process the image with OCR
-        function processImage(file) {
-            // Hide error container if visible
-            errorContainer.classList.add('hidden');
-            
-            // Show image preview
-            const url = URL.createObjectURL(file);
-            imagePreview.src = url;
-            previewContainer.classList.remove('hidden');
-            
-            // Show processing indicator
-            processingIndicator.classList.remove('hidden');
-            progressBar.style.width = '0%';
-            progressText.textContent = 'Processing image...';
-            
-            // Hide results if visible
-            resultsContainer.classList.add('hidden');
-            
-            // Use Claude if Tesseract isn't available or we're on a mobile device
-            if (!window.Tesseract || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
-                processWithClaude(file);
-                return;
-            }
-            
-            // Try Tesseract first, with fallback to Claude
-            try {
-                processTesseract(file);
-            } catch (err) {
-                console.error('Local OCR failed, falling back to Claude:', err);
-                processWithClaude(file);
-            }
-        }
-        
-        // Process with Tesseract.js
-        function processTesseract(file) {
-            progressText.textContent = 'Processing with Tesseract OCR...';
-            
-            Tesseract.recognize(
-                file,
-                'eng',
-                { 
-                    logger: progress => {
-                        updateProgress(progress);
-                    }
-                }
-            ).then(result => {
-                // Hide processing indicator
-                processingIndicator.classList.add('hidden');
-                
-                if (!result || !result.data || !result.data.text || result.data.text.trim() === '') {
-                    console.log('Tesseract returned empty result, trying Claude');
-                    processWithClaude(file);
-                    return;
-                }
-                
-                // Display results
-                const extractedText = result.data.text || '';
-                textOutput.textContent = extractedText;
-                resultsContainer.classList.remove('hidden');
-                copyButton.disabled = !extractedText.trim();
-                
-                // Scroll to results
-                resultsContainer.scrollIntoView({ behavior: 'smooth' });
-            }).catch(err => {
-                console.error('Tesseract error, falling back to Claude:', err);
-                processWithClaude(file);
-            });
-        }
-        
-        // Process with Claude
-        function processWithClaude(file) {
-            progressText.textContent = 'Processing with Claude AI OCR...';
-            progressBar.style.width = '30%';
-            
-            // Register handler for Claude's response
-            window.Poe.registerHandler("ocr-handler", (result, context) => {
-                const msg = result.responses[0];
-                
-                if (msg.status === "error") {
-                    processingIndicator.classList.add('hidden');
-                    showError('Error: ' + (msg.statusText || 'Failed to process image'));
-                } else if (msg.status === "complete") {
-                    processingIndicator.classList.add('hidden');
-                    const extractedText = msg.content || '';
-                    textOutput.textContent = extractedText;
-                    resultsContainer.classList.remove('hidden');
-                    copyButton.disabled = !extractedText.trim();
-                    resultsContainer.scrollIntoView({ behavior: 'smooth' });
-                } else if (msg.status === "incomplete") {
-                    progressBar.style.width = '70%';
-                    progressText.textContent = 'Getting text from image...';
-                }
-            });
-            
-            // Send the file to Claude for processing
-            try {
-                window.Poe.sendUserMessage(
-                    "@Claude-3.7-Sonnet Please extract all text from this image. Maintain the exact formatting, spacing, and paragraph structure as shown in the image. Reply ONLY with the extracted text, no explanations or other text.",
-                    {
-                        attachments: [file],
-                        handler: "ocr-handler",
-                        stream: false,
-                        openChat: false
-                    }
-                ).catch(err => {
-                    console.error('Claude API error:', err);
-                    processingIndicator.classList.add('hidden');
-                    showError('Error processing with AI: ' + (err.message || 'Unknown error'));
-                });
-            } catch (err) {
-                console.error('Claude API error:', err);
-                processingIndicator.classList.add('hidden');
-                showError('Error processing with AI: ' + (err.message || 'Unknown error'));
-            }
-        }
-
-        // Update progress bar and text for Tesseract
-        function updateProgress(progress) {
-            let progressPercent = 0;
-            let message = 'Processing image...';
-            
-            switch(progress.status) {
-                case 'loading tesseract core':
-                    progressPercent = 10;
-                    message = 'Loading OCR engine...';
-                    break;
-                case 'initializing tesseract':
-                    progressPercent = 20;
-                    message = 'Initializing OCR engine...';
-                    break;
-                case 'loading language traineddata':
-                    progressPercent = 30;
-                    message = 'Loading language data...';
-                    break;
-                case 'initializing api':
-                    progressPercent = 40;
-                    message = 'Preparing for text recognition...';
-                    break;
-                case 'recognizing text':
-                    progressPercent = 50 + (progress.progress * 50);
-                    message = 'Recognizing text...';
-                    break;
-            }
-            
-            progressBar.style.width = `${progressPercent}%`;
-            progressText.textContent = message;
-        }
-
-        // Copy text to clipboard
+        }        // Copy text to clipboard
         function copyToClipboard() {
             const text = textOutput.textContent;
             if (!text.trim()) return;
@@ -1011,7 +1117,7 @@
         }
 
         // Generate action items from extracted text
-        function generateActionItems() {
+        async function generateActionItems() {
             const extractedText = textOutput.textContent.trim();
             if (!extractedText) {
                 showError('No text to generate action items from');
@@ -1021,78 +1127,30 @@
             // Show processing indicator
             processingIndicator.classList.remove('hidden');
             progressBar.style.width = '30%';
-            progressText.textContent = 'Generating action items...';
+            progressText.textContent = 'Generating action items with Grok AI...';
             
             // Clear previous chat messages
             chatMessages.innerHTML = '';
             chatContainer.classList.add('hidden');
             
-            // Add initial message in chat
-            addChatMessage('teacher', 'Here are the action items from the document:');
-            
-            // Register handler for Claude's response
-            window.Poe.registerHandler("action-items-handler", (result, context) => {
-                const msg = result.responses[0];
-                
-                if (msg.status === "error") {
-                    processingIndicator.classList.add('hidden');
-                    showError('Error: ' + (msg.statusText || 'Failed to generate action items'));
-                } else if (msg.status === "complete") {
-                    processingIndicator.classList.add('hidden');
-                    
-                    // Parse action items from the response
-                    const actionItemsText = msg.content || '';
-                    const actionItems = parseActionItems(actionItemsText);
-                    
-                    // Display action items in chat interface
-                    displayActionItemsInChat(actionItems);
-                    
-                    // Show chat container and the send to sections button
-                    chatContainer.classList.remove('hidden');
-                    sendToSectionsButton.classList.remove('hidden');
-                    chatContainer.scrollIntoView({ behavior: 'smooth' });
-                } else if (msg.status === "incomplete") {
-                    progressBar.style.width = '70%';
-                    progressText.textContent = 'Analyzing content...';
-                }
-            });
-            
-            // Send the extracted text to Claude for processing
             try {
-                window.Poe.sendUserMessage(
-                    "@Claude-3.7-Sonnet I have a document that contains information for parents and students. Please extract and list up to 10 action items or important points. Format each action item as a separate bullet point. Make each action item clear, concise, and actionable. Do not include explanations outside the list of action items.",
-                    {
-                        attachments: [],
-                        handler: "action-items-handler",
-                        stream: false,
-                        openChat: false,
-                        handlerContext: { text: extractedText }
-                    }
-                ).catch(err => {
-                    console.error('Claude API error:', err);
-                    processingIndicator.classList.add('hidden');
-                    showError('Error generating action items: ' + (err.message || 'Unknown error'));
-                });
+                // Add initial message in chat
+                addChatMessage('teacher', 'Here are the action items from the document:');
                 
-                // Since we can't directly send the extracted text as an attachment,
-                // we'll follow up with the text content
-                setTimeout(() => {
-                    window.Poe.sendUserMessage(
-                        "@Claude-3.7-Sonnet Here's the document content: " + extractedText,
-                        {
-                            attachments: [],
-                            handler: "action-items-handler",
-                            stream: false,
-                            openChat: false
-                        }
-                    ).catch(err => {
-                        console.error('Claude API error:', err);
-                    });
-                }, 500);
-            } catch (err) {
-                console.error('Claude API error:', err);
+                // Generate action items with Grok
+                const actionItems = await generateActionItemsWithGrok(extractedText);
+                
+                // Display action items in chat interface
+                displayActionItemsInChat(actionItems);
+                
+                // Show chat container and the send to sections button
+                chatContainer.classList.remove('hidden');
+                sendToSectionsButton.classList.remove('hidden');
+                chatContainer.scrollIntoView({ behavior: 'smooth' });
+                
+            } catch (error) {
                 processingIndicator.classList.add('hidden');
-                showError('Error generating action items: ' + (err.message || 'Unknown error'));
+                showError(error.message);
             }
         }
         
@@ -1178,7 +1236,7 @@
                 })
                 .join('\n\n');
             
-            if (!chatContent.trim()) return;
+            if (!chatContent) return;
             
             navigator.clipboard.writeText(chatContent)
                 .then(() => {
