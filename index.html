@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TaskTap</title>
+    <title>School Hub</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -91,7 +91,7 @@
                 </div>
                 <!-- Content -->
                 <div class="relative px-5 py-10 text-white z-10">
-                    <h1 class="text-mobile-3xl font-bold mb-3">TaskTap</h1>
+                    <h1 class="text-mobile-3xl font-bold mb-3">School Hub</h1>
                     <p class="text-mobile-xl mb-6">Connect parents, students & school</p>
                     <button data-section="homework" class="hero-btn bg-white text-primary hover:bg-gray-100 px-6 py-3 rounded-full font-bold text-mobile-lg shadow-md transition-all">
                         Try Homework Tool
@@ -177,7 +177,7 @@
             
             <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-5 mb-5">
                 <h2 class="text-mobile-xl font-semibold mb-2 text-gray-800 dark:text-white">Upload Image</h2>
-                <p class="mb-4 text-mobile-lg text-gray-600 dark:text-gray-300">Take a photo of your homework board to extract the text.</p>
+                <p class="mb-4 text-mobile-lg text-gray-600 dark:text-gray-300">Take a photo of your homework to extract the text.</p>
                 
                 <div id="dropArea" class="border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg p-6 text-center cursor-pointer hover:border-primary transition-colors">
                     <div class="space-y-3">
@@ -634,7 +634,7 @@
         });        
         
         // Grok API Configuration
-        const GROK_API_KEY = 'xai-chB1xwHLU8fBB1k0r74KzLh0x5TWTzpHDEzRSXud2kyRaArXs4o9sSha1iKSzRLXwsWE9k73nCY5YguU';
+        const GROK_API_KEY = 'xai-VDpF3OIJTg9k0ruP8bGD0OX51gy2nAYWzl08ezl37XceyieaX1Shmv3ukprpTYtRtrKvMhjQqJIGdrN1';
         const GROK_ENDPOINT = 'https://api.x.ai/v1/chat/completions';
         
         // Event listeners for OCR functionality
@@ -752,8 +752,7 @@
             }
         }
 
-        // Generate action items using Grok AI
-        async function generateActionItemsWithGrok() {
+        // Generate action items using Grok AI        async function generateActionItemsWithGrok() {
             try {
                 const extractedText = textOutput.textContent;
                 if (!extractedText) {
@@ -765,7 +764,8 @@
                     headers: {
                         'Authorization': `Bearer ${GROK_API_KEY}`,
                         'Content-Type': 'application/json'
-                    },                    body: JSON.stringify({
+                    },
+                    body: JSON.stringify({
                         model: "grok-3-mini-fast",
                         messages: [
                             {
@@ -781,31 +781,32 @@
                 });
 
                 if (!response.ok) {
-                    throw new Error('Failed to analyze text with Grok AI');
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.error?.message || 'Failed to analyze text with Grok AI');
                 }
 
                 const result = await response.json();
-                // Parse bullet points from the response
-                const actionItems = result.choices[0].message.content
+                if (!result.choices || !result.choices[0]?.message?.content) {
+                    throw new Error('No response generated from Grok AI');
+                }
+
+                const content = result.choices[0].message.content;
+                const actionItems = content
                     .split('\n')
                     .filter(item => item.trim().match(/^[-•*]\s+/))
-                    .map(item => item.replace(/^[-•*]\s+/, '').trim());
-                
-                // Clear loading message
-                chatMessages.innerHTML = '';
-                
-                // Add each action item to chat
-                actionItems.forEach(item => {
-                    const messageDiv = document.createElement('div');
-                    messageDiv.className = 'bg-white dark:bg-gray-800 rounded-lg p-4 shadow';
-                    messageDiv.innerHTML = marked.parse(`- ${item}`);
-                    chatMessages.appendChild(messageDiv);
-                });
+                    .map(item => item.replace(/^[-•*]\s+/, '').trim())
+                    .filter(item => item.length > 0);
 
-                sendToSectionsButton.classList.remove('hidden');
+                if (actionItems.length === 0) {
+                    throw new Error('No action items could be extracted from the response');
+                }
+
+                // Hide processing UI before showing results
+                hideProcessingUI();
+
                 return actionItems;
-                
             } catch (error) {
+                console.error('Action items generation error:', error);
                 throw new Error('Error generating action items: ' + error.message);
             }
         }
