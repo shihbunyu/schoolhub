@@ -1,0 +1,1721 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaskTap - Parent-Student Communication Hub</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#5D5CDE',
+                        'primary-dark': '#4F4EC7'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Fun, kid-friendly styling */
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        }
+        
+        .traffic-light {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+            border: 3px solid #fff;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            animation: pulse 2s infinite;
+        }
+        .traffic-light.red {
+            background: linear-gradient(45deg, #ef4444, #dc2626);
+        }
+        .traffic-light.green {
+            background: linear-gradient(45deg, #22c55e, #16a34a);
+            animation: bounce 0.6s ease-in-out;
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px) scale(0.9); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-8px); }
+            60% { transform: translateY(-4px); }
+        }
+        
+        @keyframes wiggle {
+            0%, 100% { transform: rotate(0deg); }
+            25% { transform: rotate(-3deg); }
+            75% { transform: rotate(3deg); }
+        }
+        
+        @keyframes rainbow {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        .modal-overlay {
+            background: linear-gradient(45deg, rgba(93, 92, 222, 0.3), rgba(139, 69, 19, 0.3));
+            backdrop-filter: blur(8px);
+        }
+        
+        .modal-shake {
+            animation: shake 0.5s ease-in-out;
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0) rotate(0deg); }
+            25% { transform: translateX(-8px) rotate(-2deg); }
+            75% { transform: translateX(8px) rotate(2deg); }
+        }
+        
+        .fun-card {
+            transition: all 0.3s ease;
+            border: 3px solid transparent;
+            background-clip: padding-box;
+        }
+        
+        .fun-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 20px 40px rgba(93, 92, 222, 0.3);
+            border-color: #5D5CDE;
+        }
+        
+        .fun-button {
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4, #feca57);
+            background-size: 300% 300%;
+            animation: rainbow 3s ease infinite;
+            transition: all 0.3s ease;
+            border: none;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .fun-button:hover {
+            transform: scale(1.05);
+            animation: wiggle 0.5s ease-in-out;
+        }
+        
+        .fun-button:active {
+            transform: scale(0.95);
+        }
+        
+        .completed-task {
+            animation: celebrate 0.8s ease-in-out;
+        }
+        
+        @keyframes celebrate {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1) rotate(5deg); }
+            100% { transform: scale(1) rotate(0deg); }
+        }
+        
+        .sticker-emoji {
+            font-size: 2rem;
+            animation: wiggle 2s ease-in-out infinite;
+            display: inline-block;
+        }
+        
+        .sparkle-bg {
+            background: linear-gradient(45deg, #ff9a9e 0%, #fecfef 25%, #fecfef 75%, #ff9a9e 100%);
+            background-size: 400% 400%;
+            animation: rainbow 8s ease infinite;
+        }
+        
+        .student-friendly {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .parent-friendly {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+        
+        .teacher-friendly {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+        
+        .homework-friendly {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+        }
+        
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            background: #f39c12;
+            animation: confetti-fall 3s linear infinite;
+            z-index: 1000;
+        }
+        
+        @keyframes confetti-fall {
+            0% {
+                transform: translateY(-100vh) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(100vh) rotate(360deg);
+                opacity: 0;
+            }
+        }
+        
+        .page-header {
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4, #45b7d1);
+            background-size: 300% 300%;
+            animation: rainbow 6s ease infinite;
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            color: white;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .fun-shadow {
+            box-shadow: 0 8px 32px rgba(93, 92, 222, 0.2);
+        }
+    </style>
+</head>
+<body class="h-full bg-white dark:bg-gray-900 text-gray-900 dark:text-white transition-colors duration-300">
+    <!-- Navigation -->
+    <nav class="bg-primary dark:bg-primary-dark shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center">
+                    <h1 class="text-xl font-bold text-white cursor-pointer" onclick="showPage('homepage')">TaskTap</h1>
+                </div>
+                <div class="flex space-x-4">
+                    <button onclick="showPage('homepage')" class="nav-btn text-white hover:text-gray-200 px-3 py-2 rounded-md text-sm font-medium transition-colors">Home</button>
+                    <button onclick="showPage('homework')" class="nav-btn text-white hover:text-gray-200 px-3 py-2 rounded-md text-sm font-medium transition-colors">Homework</button>
+                    <button onclick="showPage('parent')" class="nav-btn text-white hover:text-gray-200 px-3 py-2 rounded-md text-sm font-medium transition-colors">Parent</button>
+                    <button onclick="showPage('student')" class="nav-btn text-white hover:text-gray-200 px-3 py-2 rounded-md text-sm font-medium transition-colors">Student</button>
+                    <button onclick="showPage('teacher')" class="nav-btn text-white hover:text-gray-200 px-3 py-2 rounded-md text-sm font-medium transition-colors">Teacher</button>
+                    <button onclick="showPage('classroom')" class="nav-btn text-white hover:text-gray-200 px-3 py-2 rounded-md text-sm font-medium transition-colors">Classroom</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Homepage -->
+    <div id="homepage" class="page min-h-screen">
+        <!-- Hero Section -->
+        <div class="bg-gradient-to-r from-primary to-primary-dark py-20">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+                <h2 class="text-4xl font-bold text-white mb-6">Welcome to TaskTap</h2>
+                <p class="text-xl text-gray-100 mb-8 max-w-3xl mx-auto">
+                    A smart communication and screen time management platform that bridges the gap between parents and students. 
+                    Use AI-powered homework assistance, real-time progress tracking, and intelligent screen time controls.
+                </p>
+                <div class="grid md:grid-cols-3 gap-8 mt-12 text-left">
+                    <div class="bg-white/10 backdrop-blur-sm rounded-lg p-6">
+                        <h3 class="text-lg font-semibold text-white mb-3">🤖 AI-Powered OCR</h3>
+                        <p class="text-gray-100">Convert homework images to text and generate actionable task lists automatically</p>
+                    </div>
+                    <div class="bg-white/10 backdrop-blur-sm rounded-lg p-6">
+                        <h3 class="text-lg font-semibold text-white mb-3">🚦 Real-time Tracking</h3>
+                        <p class="text-gray-100">Parents can monitor homework completion with visual traffic light indicators</p>
+                    </div>
+                    <div class="bg-white/10 backdrop-blur-sm rounded-lg p-6">
+                        <h3 class="text-lg font-semibold text-white mb-3">⏰ Screen Time Control</h3>
+                        <p class="text-gray-100">Reward system allowing parents to grant additional screen time for completed tasks</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation Section -->
+        <div class="py-16 bg-gray-50 dark:bg-gray-800">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <h3 class="text-3xl font-bold text-center mb-12">Get Started</h3>
+                <div class="grid md:grid-cols-4 gap-6">
+                    <div class="fun-card homework-friendly rounded-3xl shadow-xl p-8 text-center cursor-pointer text-white" onclick="showPage('homework')">
+                        <div class="sticker-emoji text-6xl mb-4">📚</div>
+                        <h4 class="text-xl font-bold mb-3">Homework Helper! 🤖</h4>
+                        <p class="mb-6 text-sm opacity-90">Take a photo of your homework and watch the magic happen!</p>
+                        <button class="fun-button text-white px-6 py-3 rounded-full font-bold text-sm shadow-lg">Let's Go! ✨</button>
+                    </div>
+                    <div class="fun-card parent-friendly rounded-3xl shadow-xl p-8 text-center cursor-pointer text-white" onclick="showPage('parent')">
+                        <div class="sticker-emoji text-6xl mb-4">👨‍👩‍👧‍👦</div>
+                        <h4 class="text-xl font-bold mb-3">Parent Zone! 🏠</h4>
+                        <p class="mb-6 text-sm opacity-90">Keep track of your little star's progress!</p>
+                        <button class="fun-button text-white px-6 py-3 rounded-full font-bold text-sm shadow-lg">Enter! 🚀</button>
+                    </div>
+                    <div class="fun-card student-friendly rounded-3xl shadow-xl p-8 text-center cursor-pointer text-white" onclick="showPage('student')">
+                        <div class="sticker-emoji text-6xl mb-4">🎓</div>
+                        <h4 class="text-xl font-bold mb-3">My Tasks! ⭐</h4>
+                        <p class="mb-6 text-sm opacity-90">Complete tasks and earn awesome rewards!</p>
+                        <button class="fun-button text-white px-6 py-3 rounded-full font-bold text-sm shadow-lg">Play! 🎮</button>
+                    </div>
+                    <div class="fun-card teacher-friendly rounded-3xl shadow-xl p-8 text-center cursor-pointer text-white" onclick="showPage('teacher')">
+                        <div class="sticker-emoji text-6xl mb-4">👩‍🏫</div>
+                        <h4 class="text-xl font-bold mb-3">Teacher Hub! 📝</h4>
+                        <p class="mb-6 text-sm opacity-90">Share daily reports with families!</p>
+                        <button class="fun-button text-white px-6 py-3 rounded-full font-bold text-sm shadow-lg">Share! 💌</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- API Key Setup Section -->
+        <div class="py-16 bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-900 dark:to-blue-900">
+            <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+                <h3 class="text-3xl font-bold mb-8">🔑 API Configuration</h3>
+                <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-xl p-8 max-w-2xl mx-auto">
+                    <div class="sticker-emoji text-4xl mb-4">🤖</div>
+                    <h4 class="text-xl font-bold mb-4">Grok AI Setup</h4>
+                    <p class="text-gray-600 dark:text-gray-300 mb-6">
+                        Enter your Grok AI API key to enable AI-powered homework assistance and image recognition features.
+                    </p>
+                    
+                    <div class="space-y-4">
+                        <div class="relative">
+                            <input 
+                                type="password" 
+                                id="apiKeyInput" 
+                                placeholder="Enter your Grok AI API key" 
+                                class="w-full px-4 py-3 border-2 border-purple-300 dark:border-purple-600 rounded-xl text-base bg-white dark:bg-gray-700 focus:ring-4 focus:ring-purple-200 focus:border-purple-500 transition-all"
+                            >
+                            <button 
+                                type="button" 
+                                onclick="toggleApiKeyVisibility()" 
+                                class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                            >
+                                <span id="eyeIcon">👁️</span>
+                            </button>
+                        </div>
+                        
+                        <div class="flex gap-3">
+                            <button onclick="saveApiKey()" class="flex-1 fun-button text-white px-6 py-3 rounded-xl font-bold border-4 border-white">
+                                💾 Save API Key
+                            </button>
+                            <button onclick="clearApiKey()" class="px-6 py-3 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-xl font-bold hover:bg-gray-300 dark:hover:bg-gray-500 transition-colors">
+                                🗑️ Clear
+                            </button>
+                        </div>
+                        
+                        <div id="apiKeyStatus" class="hidden"></div>
+                        
+                        <div class="text-xs text-gray-500 dark:text-gray-400 text-left bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
+                            <strong>How to get your API key:</strong><br>
+                            1. Visit <a href="https://console.x.ai" target="_blank" class="text-purple-600 dark:text-purple-400 hover:underline">console.x.ai</a><br>
+                            2. Sign up or log in to your account<br>
+                            3. Navigate to API Keys section<br>
+                            4. Generate a new API key<br>
+                            5. Copy and paste it above
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contact Section -->
+        <div class="py-16 bg-white dark:bg-gray-900">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+                <h3 class="text-3xl font-bold mb-8">Contact Us</h3>
+                <div class="grid md:grid-cols-3 gap-8">
+                    <div>
+                        <h4 class="text-lg font-semibold mb-2">📧 Email</h4>
+                        <p class="text-gray-600 dark:text-gray-300">support@tasktap.app</p>
+                    </div>
+                    <div>
+                        <h4 class="text-lg font-semibold mb-2">📞 Phone</h4>
+                        <p class="text-gray-600 dark:text-gray-300">1-800-TASKTAP</p>
+                    </div>
+                    <div>
+                        <h4 class="text-lg font-semibold mb-2">💬 Support</h4>
+                        <p class="text-gray-600 dark:text-gray-300">Available 24/7</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Homework Page -->
+    <div id="homework" class="page hidden min-h-screen py-8">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h2 class="text-3xl font-bold mb-8">Homework Assistant</h2>
+            
+            <!-- AI OCR Section -->
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-8">
+                <h3 class="text-xl font-semibold mb-4">📷 AI OCR - Image to Text</h3>
+                <div class="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-8 text-center">
+                    <input type="file" id="imageUpload" accept="image/*" class="hidden" onchange="handleImageUpload(event)">
+                    <button onclick="document.getElementById('imageUpload').click()" class="fun-button text-white px-8 py-4 rounded-full text-lg font-bold shadow-lg border-4 border-white">
+                        📸 Upload Magic Photo! ✨
+                    </button>
+                    <p class="text-gray-500 dark:text-gray-400 mt-2">Upload an image of your homework to convert it to text</p>
+                </div>
+                <div id="ocrResult" class="mt-6 hidden">
+                    <h4 class="font-semibold mb-2">Extracted Text:</h4>
+                    <div id="extractedText" class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg text-sm"></div>
+                </div>
+                <div id="ocrLoading" class="hidden mt-6 text-center">
+                    <div class="inline-flex items-center">
+                        <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mr-3"></div>
+                        <span>Processing image...</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AI Summary Section -->
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-8">
+                <h3 class="text-xl font-semibold mb-4">🤖 AI Summary - Action Items</h3>
+                <textarea id="homeworkText" placeholder="Paste or type homework text here..." class="w-full h-32 p-4 border border-gray-300 dark:border-gray-600 rounded-lg text-base bg-white dark:bg-gray-700 resize-none"></textarea>
+                <button onclick="generateActionItems()" class="mt-4 fun-button text-white px-8 py-4 rounded-full text-lg font-bold shadow-lg border-4 border-white">
+                    🤖 Create My Tasks! ⚡
+                </button>
+                <div id="summaryLoading" class="hidden mt-6 text-center">
+                    <div class="inline-flex items-center">
+                        <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mr-3"></div>
+                        <span>Generating action items...</span>
+                    </div>
+                </div>
+                <div id="actionItems" class="mt-6 hidden">
+                    <h4 class="font-semibold mb-4">Action Items:</h4>
+                    <ul id="actionItemsList" class="space-y-2"></ul>
+                </div>
+            </div>
+
+            <!-- Send to Pages Section -->
+            <div id="sendSection" class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 hidden">
+                <h3 class="text-xl font-semibold mb-4">📤 Send to Dashboard</h3>
+                <p class="text-gray-600 dark:text-gray-300 mb-4">Send the action items to both Parent and Student dashboards for tracking.</p>
+                <button onclick="sendToPages()" class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg text-base font-medium transition-colors">
+                    Send to Parent & Student Pages
+                </button>
+                <div id="sendSuccess" class="hidden mt-4 p-4 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded-lg">
+                    ✅ Action items successfully sent to Parent and Student dashboards!
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Parent Page -->
+    <div id="parent" class="page hidden min-h-screen py-8">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h2 class="text-3xl font-bold mb-8">Parent Dashboard</h2>
+            
+            <!-- Action Board Section -->
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-8">
+                <h3 class="text-xl font-semibold mb-4">📋 Homework Progress Tracker</h3>
+                <div id="parentActionBoard" class="space-y-3">
+                    <p class="text-gray-500 dark:text-gray-400">No action items received yet. Generate them from the Homework page.</p>
+                </div>
+            </div>
+
+            <!-- Screen Time Control Section -->
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+                <h3 class="text-xl font-semibold mb-4">⏰ Screen Time Rewards</h3>
+                <p class="text-gray-600 dark:text-gray-300 mb-4">Reward your student with additional screen time for completed homework.</p>
+                <div class="flex items-center space-x-4">
+                    <button onclick="addScreenTime()" class="bg-orange-600 hover:bg-orange-700 text-white px-6 py-3 rounded-lg text-base font-medium transition-colors">
+                        Add 30 Minutes Screen Time
+                    </button>
+                    <div id="screenTimeStatus" class="text-sm text-gray-600 dark:text-gray-300"></div>
+                </div>
+                <div id="screenTimeNotification" class="hidden mt-4 p-4 bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-200 rounded-lg">
+                    🎉 30 minutes of screen time added and notification sent to student!
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Password Modal for Parent Page -->
+    <div id="passwordModal" class="fixed inset-0 modal-overlay flex items-center justify-center z-50 hidden">
+        <div id="passwordModalContent" class="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-md mx-4">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold">🔒 Parent Access Required</h3>
+                <button onclick="closePasswordModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <p class="text-gray-600 dark:text-gray-300 mb-4">Please enter the parent password to access the dashboard.</p>
+            <div class="space-y-4">
+                <input 
+                    type="password" 
+                    id="passwordInput" 
+                    placeholder="Enter password" 
+                    class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg text-base bg-white dark:bg-gray-700 focus:ring-2 focus:ring-primary focus:border-transparent"
+                    onkeypress="handlePasswordKeyPress(event)"
+                >
+                <div id="passwordError" class="hidden text-red-600 text-sm">
+                    ❌ Incorrect password. Please try again.
+                </div>
+                <div class="flex space-x-3">
+                    <button 
+                        onclick="verifyPassword()" 
+                        class="flex-1 bg-primary hover:bg-primary-dark text-white px-4 py-3 rounded-lg text-base font-medium transition-colors"
+                    >
+                        Access Dashboard
+                    </button>
+                    <button 
+                        onclick="closePasswordModal()" 
+                        class="px-4 py-3 text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white transition-colors"
+                    >
+                        Cancel
+                    </button>
+                </div>
+            </div>
+            <div class="mt-4 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg text-sm text-gray-600 dark:text-gray-300">
+                <strong>Default password:</strong> 0000
+            </div>
+        </div>
+    </div>
+
+    <!-- Teacher Page -->
+    <div id="teacher" class="page hidden min-h-screen py-8">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h2 class="text-3xl font-bold mb-8">Teacher Portal</h2>
+            
+            <!-- Daily Report Section -->
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-8">
+                <h3 class="text-xl font-semibold mb-4">📝 Daily School Report</h3>
+                <p class="text-gray-600 dark:text-gray-300 mb-4">Write a brief report about the student's performance today (approximately 40 words).</p>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label for="studentName" class="block text-sm font-medium mb-2">Student Name</label>
+                        <input 
+                            type="text" 
+                            id="studentName" 
+                            placeholder="Enter student's name" 
+                            class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg text-base bg-white dark:bg-gray-700 focus:ring-2 focus:ring-primary focus:border-transparent"
+                        >
+                    </div>
+                    
+                    <div>
+                        <label for="reportText" class="block text-sm font-medium mb-2">Daily Report</label>
+                        <textarea 
+                            id="reportText" 
+                            placeholder="Example: Emma participated actively in math class today, showing excellent problem-solving skills. She helped classmates during group work and completed all assignments on time. Great focus and positive attitude throughout the day!"
+                            class="w-full h-32 p-4 border border-gray-300 dark:border-gray-600 rounded-lg text-base bg-white dark:bg-gray-700 resize-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                            maxlength="300"
+                            oninput="updateWordCount()"
+                        ></textarea>
+                        <div class="flex justify-between items-center mt-2">
+                            <span id="wordCount" class="text-sm text-gray-500">0 words</span>
+                            <span class="text-sm text-gray-500">Recommended: ~40 words</span>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label for="subjectFocus" class="block text-sm font-medium mb-2">Subject Focus</label>
+                            <select id="subjectFocus" class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg text-base bg-white dark:bg-gray-700 focus:ring-2 focus:ring-primary focus:border-transparent">
+                                <option value="">Select subject</option>
+                                <option value="Math">Math</option>
+                                <option value="English">English</option>
+                                <option value="Science">Science</option>
+                                <option value="Social Studies">Social Studies</option>
+                                <option value="Art">Art</option>
+                                <option value="PE">Physical Education</option>
+                                <option value="Music">Music</option>
+                                <option value="General">General/Multiple</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label for="performanceRating" class="block text-sm font-medium mb-2">Performance Rating</label>
+                            <select id="performanceRating" class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg text-base bg-white dark:bg-gray-700 focus:ring-2 focus:ring-primary focus:border-transparent">
+                                <option value="">Select rating</option>
+                                <option value="Excellent">⭐⭐⭐ Excellent</option>
+                                <option value="Good">⭐⭐ Good</option>
+                                <option value="Satisfactory">⭐ Satisfactory</option>
+                                <option value="Needs Improvement">⚠️ Needs Improvement</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
+                <button onclick="sendDailyReport()" class="mt-6 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg text-base font-medium transition-colors">
+                    📤 Send Report to Parents & Student
+                </button>
+                
+                <div id="reportSuccess" class="hidden mt-4 p-4 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded-lg">
+                    ✅ Daily report sent successfully to parents and student!
+                </div>
+            </div>
+            
+            <!-- Recent Reports Section -->
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+                <h3 class="text-xl font-semibold mb-4">📋 Recent Reports</h3>
+                <div id="recentReports" class="space-y-3">
+                    <p class="text-gray-500 dark:text-gray-400">No reports sent today. Create your first daily report above.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Virtual Classroom Page -->
+    <div id="classroom" class="page hidden min-h-screen py-8">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div id="classroomJoin" class="text-center">
+                <div class="page-header">
+                    <h2 class="text-4xl font-bold mb-4">🏫 Virtual Classroom</h2>
+                    <p class="text-xl opacity-90">Join your class and collaborate on amazing projects!</p>
+                </div>
+                
+                <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-xl p-8 max-w-md mx-auto">
+                    <div class="sticker-emoji text-6xl mb-6">🚪</div>
+                    <h3 class="text-2xl font-bold mb-6">Enter Classroom Code</h3>
+                    <input 
+                        type="text" 
+                        id="classroomCode" 
+                        placeholder="Enter 6-digit code (e.g., ABC123)" 
+                        class="w-full px-6 py-4 border-4 border-primary rounded-2xl text-xl text-center font-bold text-primary uppercase tracking-wider focus:ring-4 focus:ring-primary/30 focus:border-primary-dark transition-all"
+                        maxlength="6"
+                        oninput="this.value = this.value.toUpperCase()"
+                    >
+                    <button onclick="joinClassroom()" class="mt-6 fun-button text-white px-8 py-4 rounded-full text-xl font-bold shadow-lg w-full border-4 border-white">
+                        🚀 Join My Class! ✨
+                    </button>
+                    
+                    <div class="mt-6 p-4 bg-blue-50 dark:bg-blue-900/30 rounded-2xl">
+                        <h4 class="font-bold text-blue-800 dark:text-blue-200 mb-2">📚 Demo Classrooms</h4>
+                        <div class="space-y-2 text-sm">
+                            <div class="flex justify-between items-center">
+                                <span>Mrs. Johnson's 5th Grade</span>
+                                <code class="bg-primary text-white px-2 py-1 rounded font-mono">ABC123</code>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span>Mr. Smith's Science Class</span>
+                                <code class="bg-primary text-white px-2 py-1 rounded font-mono">XYZ789</code>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span>Ms. Davis's Art Studio</span>
+                                <code class="bg-primary text-white px-2 py-1 rounded font-mono">ART456</code>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="classroomMain" class="hidden">
+                <!-- Classroom Header -->
+                <div class="bg-gradient-to-r from-blue-500 to-purple-600 rounded-3xl p-6 mb-8 text-white">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h2 class="text-3xl font-bold" id="classroomTitle">Mrs. Johnson's 5th Grade</h2>
+                            <p class="text-lg opacity-90" id="classroomSubtitle">📚 Language Arts & Science Projects</p>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-sm opacity-90">Classroom Code</div>
+                            <div class="text-2xl font-mono font-bold" id="currentClassCode">ABC123</div>
+                            <button onclick="leaveClassroom()" class="mt-2 bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg text-sm transition-colors">
+                                🚪 Leave Class
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Classmates Online -->
+                <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-lg p-6 mb-8">
+                    <h3 class="text-xl font-bold mb-4">👥 Classmates Online</h3>
+                    <div id="classmatesList" class="grid grid-cols-2 md:grid-cols-4 gap-4"></div>
+                </div>
+                
+                <!-- Group Projects Section -->
+                <div class="grid lg:grid-cols-2 gap-8">
+                    <!-- Active Projects -->
+                    <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-lg p-6">
+                        <h3 class="text-xl font-bold mb-4">🎯 Active Group Projects</h3>
+                        <div id="activeProjects" class="space-y-4"></div>
+                        
+                        <button onclick="createProject()" class="mt-6 fun-button text-white px-6 py-3 rounded-full font-bold w-full border-4 border-white">
+                            ➕ Create New Project! 🎨
+                        </button>
+                    </div>
+                    
+                    <!-- AI Study Helper -->
+                    <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-lg p-6">
+                        <h3 class="text-xl font-bold mb-4">🤖 AI Study Buddy</h3>
+                        <div class="bg-gradient-to-br from-purple-100 to-pink-100 dark:from-purple-900 dark:to-pink-900 rounded-2xl p-4 mb-4">
+                            <div class="sticker-emoji text-4xl mb-2">🧠</div>
+                            <p class="text-sm">Ask me anything about your projects or homework!</p>
+                        </div>
+                        
+                        <div id="chatMessages" class="h-64 bg-gray-50 dark:bg-gray-700 rounded-2xl p-4 mb-4 overflow-y-auto">
+                            <div class="text-center text-gray-500 dark:text-gray-400 text-sm">
+                                💬 Start a conversation with your AI Study Buddy!
+                            </div>
+                        </div>
+                        
+                        <div class="flex gap-2">
+                            <input 
+                                type="text" 
+                                id="chatInput" 
+                                placeholder="Ask me about your project..." 
+                                class="flex-1 px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl text-base bg-white dark:bg-gray-700 focus:ring-2 focus:ring-primary focus:border-transparent"
+                                onkeypress="handleChatKeyPress(event)"
+                            >
+                            <button onclick="sendChatMessage()" class="fun-button text-white px-4 py-3 rounded-xl border-2 border-white">
+                                💬
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Student Page -->
+    <div id="student" class="page hidden min-h-screen py-8">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h2 class="text-3xl font-bold mb-8">Student Portal</h2>
+            
+            <!-- Screen Time Notifications -->
+            <div id="studentNotifications" class="mb-6"></div>
+            
+            <!-- Action Board Section -->
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+                <h3 class="text-xl font-semibold mb-4">📚 My Homework Tasks</h3>
+                <div id="studentActionBoard" class="space-y-3">
+                    <p class="text-gray-500 dark:text-gray-400">No homework tasks yet. Generate them from the Homework page.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Dark mode setup
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.documentElement.classList.add('dark');
+        }
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
+            if (event.matches) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        });
+
+        // App state management
+        let appState = {
+            actionItems: [],
+            completedItems: new Set(),
+            notifications: [],
+            parentAuthenticated: false,
+            teacherAuthenticated: false,
+            teacherReports: []
+        };
+
+        // Password configuration
+        const PARENT_PASSWORD = "0000";
+        const TEACHER_PASSWORD = "0001";
+
+        // Page navigation
+        function showPage(pageId) {
+            // Check if trying to access parent page
+            if (pageId === 'parent' && !appState.parentAuthenticated) {
+                showPasswordModal('parent');
+                return;
+            }
+            
+            // Check if trying to access teacher page
+            if (pageId === 'teacher' && !appState.teacherAuthenticated) {
+                showPasswordModal('teacher');
+                return;
+            }
+            
+            document.querySelectorAll('.page').forEach(page => {
+                page.classList.add('hidden');
+            });
+            document.getElementById(pageId).classList.remove('hidden');
+            document.getElementById(pageId).classList.add('fade-in');
+        }
+
+        // Password modal functions
+        let currentPasswordType = '';
+        
+        function showPasswordModal(type) {
+            currentPasswordType = type;
+            const modal = document.getElementById('passwordModal');
+            const title = modal.querySelector('h3');
+            const description = modal.querySelector('p');
+            const defaultPassword = modal.querySelector('.bg-gray-50.dark\\:bg-gray-700');
+            
+            if (type === 'teacher') {
+                title.innerHTML = '🔒 Teacher Access Required';
+                description.textContent = 'Please enter the teacher password to access the portal.';
+                defaultPassword.innerHTML = '<strong>Default password:</strong> 0001';
+            } else {
+                title.innerHTML = '🔒 Parent Access Required';
+                description.textContent = 'Please enter the parent password to access the dashboard.';
+                defaultPassword.innerHTML = '<strong>Default password:</strong> 0000';
+            }
+            
+            modal.classList.remove('hidden');
+            document.getElementById('passwordInput').focus();
+            document.getElementById('passwordError').classList.add('hidden');
+            document.getElementById('passwordInput').value = '';
+        }
+
+        function closePasswordModal() {
+            document.getElementById('passwordModal').classList.add('hidden');
+        }
+
+        function handlePasswordKeyPress(event) {
+            if (event.key === 'Enter') {
+                verifyPassword();
+            }
+        }
+
+        function verifyPassword() {
+            const passwordInput = document.getElementById('passwordInput');
+            const passwordError = document.getElementById('passwordError');
+            const modalContent = document.getElementById('passwordModalContent');
+            
+            if (currentPasswordType === 'teacher' && passwordInput.value === TEACHER_PASSWORD) {
+                appState.teacherAuthenticated = true;
+                closePasswordModal();
+                showPage('teacher');
+                showNotification('Welcome to Teacher Portal!', 'success');
+            } else if (currentPasswordType === 'parent' && passwordInput.value === PARENT_PASSWORD) {
+                appState.parentAuthenticated = true;
+                closePasswordModal();
+                showPage('parent');
+                showNotification('Welcome to Parent Dashboard!', 'success');
+            } else {
+                passwordError.classList.remove('hidden');
+                modalContent.classList.add('modal-shake');
+                passwordInput.value = '';
+                passwordInput.focus();
+                
+                // Remove shake animation after it completes
+                setTimeout(() => {
+                    modalContent.classList.remove('modal-shake');
+                }, 500);
+            }
+        }
+
+        // API Key Management
+        let grokApiKey = '';
+
+        function toggleApiKeyVisibility() {
+            const input = document.getElementById('apiKeyInput');
+            const eyeIcon = document.getElementById('eyeIcon');
+            
+            if (input.type === 'password') {
+                input.type = 'text';
+                eyeIcon.textContent = '🙈';
+            } else {
+                input.type = 'password';
+                eyeIcon.textContent = '👁️';
+            }
+        }
+
+        function saveApiKey() {
+            const apiKey = document.getElementById('apiKeyInput').value.trim();
+            const status = document.getElementById('apiKeyStatus');
+            
+            if (!apiKey) {
+                showApiKeyStatus('Please enter an API key', 'error');
+                return;
+            }
+            
+            if (!apiKey.startsWith('xai-')) {
+                showApiKeyStatus('Invalid API key format. Grok API keys start with "xai-"', 'error');
+                return;
+            }
+            
+            grokApiKey = apiKey;
+            showApiKeyStatus('API key saved successfully! 🎉', 'success');
+            
+            // Clear the input for security
+            document.getElementById('apiKeyInput').value = '';
+        }
+
+        function clearApiKey() {
+            grokApiKey = '';
+            document.getElementById('apiKeyInput').value = '';
+            showApiKeyStatus('API key cleared', 'info');
+        }
+
+        function showApiKeyStatus(message, type) {
+            const status = document.getElementById('apiKeyStatus');
+            const colors = {
+                success: 'text-green-600 bg-green-100 dark:bg-green-900 dark:text-green-200',
+                error: 'text-red-600 bg-red-100 dark:bg-red-900 dark:text-red-200',
+                info: 'text-blue-600 bg-blue-100 dark:bg-blue-900 dark:text-blue-200'
+            };
+            
+            status.className = `p-3 rounded-lg text-sm ${colors[type]}`;
+            status.textContent = message;
+            status.classList.remove('hidden');
+            
+            setTimeout(() => {
+                status.classList.add('hidden');
+            }, 3000);
+        }
+
+        function checkApiKey() {
+            if (!grokApiKey) {
+                showNotification('🔑 Please set up your Grok AI API key on the home page first!', 'error');
+                return false;
+            }
+            return true;
+        }
+
+        // Grok AI API functions
+        async function callGrokAPI(messages, model = 'grok-3-mini') {
+            if (!checkApiKey()) {
+                throw new Error('API key not configured');
+            }
+            
+            try {
+                const response = await fetch('https://api.x.ai/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${grokApiKey}`
+                    },
+                    body: JSON.stringify({
+                        model: model,
+                        messages: messages,
+                        temperature: 0.7,
+                        max_tokens: 1000
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`API request failed: ${response.status} ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                return data.choices[0].message.content;
+            } catch (error) {
+                console.error('Grok API Error:', error);
+                throw error;
+            }
+        }
+
+        async function callGrokVision(imageBase64, prompt) {
+            if (!checkApiKey()) {
+                throw new Error('API key not configured');
+            }
+            
+            try {
+                const messages = [
+                    {
+                        role: "user",
+                        content: [
+                            {
+                                type: "text",
+                                text: prompt
+                            },
+                            {
+                                type: "image_url",
+                                image_url: {
+                                    url: `data:image/jpeg;base64,${imageBase64}`
+                                }
+                            }
+                        ]
+                    }
+                ];
+
+                const response = await fetch('https://api.x.ai/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${grokApiKey}`
+                    },
+                    body: JSON.stringify({
+                        model: 'grok-2-vision-1212',
+                        messages: messages,
+                        temperature: 0.3,
+                        max_tokens: 1000
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Vision API request failed: ${response.status} ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                return data.choices[0].message.content;
+            } catch (error) {
+                console.error('Grok Vision API Error:', error);
+                throw error;
+            }
+        }
+
+        // Helper function to convert file to base64
+        function fileToBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = () => {
+                    const base64 = reader.result.split(',')[1]; // Remove data:image/jpeg;base64, prefix
+                    resolve(base64);
+                };
+                reader.onerror = error => reject(error);
+            });
+        }
+
+        // Image upload and OCR
+        async function handleImageUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            if (!checkApiKey()) {
+                return;
+            }
+
+            const ocrLoading = document.getElementById('ocrLoading');
+            const ocrResult = document.getElementById('ocrResult');
+            const extractedText = document.getElementById('extractedText');
+            const homeworkText = document.getElementById('homeworkText');
+            
+            ocrResult.classList.add('hidden');
+            ocrLoading.classList.remove('hidden');
+
+            try {
+                const imageBase64 = await fileToBase64(file);
+                const extractedTextContent = await callGrokVision(
+                    imageBase64, 
+                    "Please extract all text from this homework image and provide it as plain text without any additional formatting or explanations. Focus on homework content, assignments, questions, and any educational material visible in the image."
+                );
+                
+                ocrLoading.classList.add('hidden');
+                extractedText.textContent = extractedTextContent;
+                homeworkText.value = extractedTextContent;
+                ocrResult.classList.remove('hidden');
+                
+            } catch (err) {
+                ocrLoading.classList.add('hidden');
+                let errorMessage = "Error: " + err.message;
+                if (err.message.includes('API key not configured')) {
+                    errorMessage = "🔑 Please set up your Grok AI API key on the home page first!";
+                } else if (err.message.includes('401')) {
+                    errorMessage = "🔑 Invalid API key. Please check your Grok AI API key on the home page.";
+                } else if (err.message.includes('403')) {
+                    errorMessage = "🚫 API access denied. Please check your Grok AI subscription.";
+                }
+                extractedText.textContent = errorMessage;
+                ocrResult.classList.remove('hidden');
+            }
+        }
+
+        // Generate action items
+        async function generateActionItems() {
+            const homeworkText = document.getElementById('homeworkText').value.trim();
+            if (!homeworkText) {
+                alert('Please enter or upload homework text first.');
+                return;
+            }
+
+            if (!checkApiKey()) {
+                return;
+            }
+
+            const summaryLoading = document.getElementById('summaryLoading');
+            const actionItems = document.getElementById('actionItems');
+            const actionItemsList = document.getElementById('actionItemsList');
+            const sendSection = document.getElementById('sendSection');
+            
+            actionItems.classList.add('hidden');
+            summaryLoading.classList.remove('hidden');
+
+            try {
+                const messages = [
+                    {
+                        role: "user",
+                        content: `Convert this homework text into a maximum of 10 clear, actionable task items. Provide ONLY raw JSON in your response with no explanations, additional text, or code block formatting. Use this format: {"actionItems": ["task 1", "task 2", ...]}\n\nHomework text: ${homeworkText}`
+                    }
+                ];
+
+                const response = await callGrokAPI(messages, 'grok-3-mini');
+                
+                summaryLoading.classList.add('hidden');
+                
+                try {
+                    const parsedResponse = JSON.parse(response);
+                    appState.actionItems = parsedResponse.actionItems || parsedResponse.items || parsedResponse;
+                    
+                    if (Array.isArray(appState.actionItems)) {
+                        actionItemsList.innerHTML = appState.actionItems.map((item, index) => 
+                            `<li class="flex items-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                                <span class="flex-1">${typeof item === 'string' ? item : item.task || item.description || item}</span>
+                            </li>`
+                        ).join('');
+                        
+                        actionItems.classList.remove('hidden');
+                        sendSection.classList.remove('hidden');
+                    } else {
+                        actionItemsList.innerHTML = `<li class="text-red-600">Invalid response format</li>`;
+                        actionItems.classList.remove('hidden');
+                    }
+                } catch (e) {
+                    // Fallback: parse as plain text
+                    const lines = response.split('\n').filter(line => line.trim() && !line.includes('{') && !line.includes('}'));
+                    appState.actionItems = lines.slice(0, 10).map(line => line.replace(/^\d+\.\s*/, '').replace(/^-\s*/, '').replace(/^\*\s*/, ''));
+                    
+                    if (appState.actionItems.length === 0) {
+                        // If no valid lines found, treat entire response as one item
+                        appState.actionItems = [response.substring(0, 200)];
+                    }
+                    
+                    actionItemsList.innerHTML = appState.actionItems.map((item, index) => 
+                        `<li class="flex items-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                            <span class="flex-1">${item}</span>
+                        </li>`
+                    ).join('');
+                    
+                    actionItems.classList.remove('hidden');
+                    sendSection.classList.remove('hidden');
+                }
+                
+            } catch (err) {
+                summaryLoading.classList.add('hidden');
+                let errorMessage = "Error: " + err.message;
+                if (err.message.includes('API key not configured')) {
+                    errorMessage = "🔑 Please set up your Grok AI API key on the home page first!";
+                } else if (err.message.includes('401')) {
+                    errorMessage = "🔑 Invalid API key. Please check your Grok AI API key on the home page.";
+                } else if (err.message.includes('403')) {
+                    errorMessage = "🚫 API access denied. Please check your Grok AI subscription.";
+                }
+                actionItemsList.innerHTML = `<li class="text-red-600">${errorMessage}</li>`;
+                actionItems.classList.remove('hidden');
+            }
+        }
+
+        // Send action items to parent and student pages
+        function sendToPages() {
+            if (appState.actionItems.length === 0) return;
+
+            // Update parent page
+            updateParentBoard();
+            
+            // Update student page
+            updateStudentBoard();
+
+            // Show success message
+            document.getElementById('sendSuccess').classList.remove('hidden');
+            setTimeout(() => {
+                document.getElementById('sendSuccess').classList.add('hidden');
+            }, 3000);
+        }
+
+        // Update parent action board
+        function updateParentBoard() {
+            const parentBoard = document.getElementById('parentActionBoard');
+            
+            parentBoard.innerHTML = appState.actionItems.map((item, index) => {
+                const isCompleted = appState.completedItems.has(index);
+                return `<div class="flex items-center p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                    <div class="traffic-light ${isCompleted ? 'green' : 'red'} mr-3"></div>
+                    <span class="flex-1 ${isCompleted ? 'line-through text-gray-500' : ''}">${item}</span>
+                    <span class="text-xs text-gray-500 ml-2">${isCompleted ? 'Completed' : 'Pending'}</span>
+                </div>`;
+            }).join('');
+        }
+
+        // Update student action board
+        function updateStudentBoard() {
+            const studentBoard = document.getElementById('studentActionBoard');
+            
+            studentBoard.innerHTML = appState.actionItems.map((item, index) => {
+                const isCompleted = appState.completedItems.has(index);
+                return `<div class="flex items-center p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                    <span class="flex-1 ${isCompleted ? 'line-through text-gray-500' : ''}">${item}</span>
+                    <button onclick="completeTask(${index})" 
+                            class="ml-4 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                                isCompleted 
+                                ? 'bg-green-600 text-white cursor-not-allowed' 
+                                : 'bg-primary hover:bg-primary-dark text-white'
+                            }" 
+                            ${isCompleted ? 'disabled' : ''}>
+                        ${isCompleted ? 'Completed ✓' : 'Complete'}
+                    </button>
+                </div>`;
+            }).join('');
+        }
+
+        // Complete a task (student action)
+        function completeTask(index) {
+            if (appState.completedItems.has(index)) return;
+            
+            appState.completedItems.add(index);
+            updateStudentBoard();
+            updateParentBoard();
+            
+            // Add celebration effects
+            createConfetti();
+            
+            // Show completion feedback
+            showNotification('🎉 Awesome! Task completed! Parent has been notified! 🌟', 'success');
+        }
+        
+        // Create confetti effect
+        function createConfetti() {
+            const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#feca57', '#ff9ff3', '#54a0ff'];
+            for (let i = 0; i < 50; i++) {
+                setTimeout(() => {
+                    const confetti = document.createElement('div');
+                    confetti.className = 'confetti';
+                    confetti.style.left = Math.random() * 100 + 'vw';
+                    confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                    confetti.style.animationDelay = Math.random() * 3 + 's';
+                    document.body.appendChild(confetti);
+                    
+                    setTimeout(() => {
+                        confetti.remove();
+                    }, 3000);
+                }, i * 50);
+            }
+        }
+
+        // Add screen time (parent action)
+        function addScreenTime() {
+            const notification = document.getElementById('screenTimeNotification');
+            notification.classList.remove('hidden');
+            
+            // Add notification to student page
+            showStudentNotification('🎉 Great job! Your parent has added 30 minutes of screen time as a reward!');
+            
+            setTimeout(() => {
+                notification.classList.add('hidden');
+            }, 5000);
+        }
+
+        // Show student notification
+        function showStudentNotification(message) {
+            const notificationsDiv = document.getElementById('studentNotifications');
+            const notificationEl = document.createElement('div');
+            notificationEl.className = 'p-4 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded-lg fade-in';
+            notificationEl.textContent = message;
+            
+            notificationsDiv.appendChild(notificationEl);
+            
+            setTimeout(() => {
+                notificationEl.remove();
+            }, 5000);
+        }
+
+        // General notification function
+        function showNotification(message, type = 'info') {
+            const colors = {
+                success: 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200',
+                error: 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200',
+                info: 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200'
+            };
+            
+            const notification = document.createElement('div');
+            notification.className = `fixed top-4 right-4 p-4 rounded-lg z-50 fade-in ${colors[type]}`;
+            notification.textContent = message;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+
+        // Teacher functions
+        function updateWordCount() {
+            const text = document.getElementById('reportText').value;
+            const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+            document.getElementById('wordCount').textContent = `${words} words`;
+        }
+
+        function sendDailyReport() {
+            const studentName = document.getElementById('studentName').value.trim();
+            const reportText = document.getElementById('reportText').value.trim();
+            const subjectFocus = document.getElementById('subjectFocus').value;
+            const performanceRating = document.getElementById('performanceRating').value;
+
+            if (!studentName || !reportText) {
+                alert('Please fill in both student name and report text.');
+                return;
+            }
+
+            // Create report object
+            const report = {
+                id: Date.now(),
+                studentName: studentName,
+                reportText: reportText,
+                subject: subjectFocus || 'General',
+                rating: performanceRating || 'Not specified',
+                timestamp: new Date().toLocaleString(),
+                date: new Date().toLocaleDateString()
+            };
+
+            // Add to teacher reports
+            appState.teacherReports.unshift(report);
+
+            // Update recent reports display
+            updateRecentReports();
+
+            // Send to parent and student pages
+            updateParentReports();
+            updateStudentReports();
+
+            // Show success message
+            document.getElementById('reportSuccess').classList.remove('hidden');
+            setTimeout(() => {
+                document.getElementById('reportSuccess').classList.add('hidden');
+            }, 3000);
+
+            // Clear form
+            document.getElementById('studentName').value = '';
+            document.getElementById('reportText').value = '';
+            document.getElementById('subjectFocus').value = '';
+            document.getElementById('performanceRating').value = '';
+            updateWordCount();
+
+            showNotification('Daily report sent successfully!', 'success');
+        }
+
+        function updateRecentReports() {
+            const recentReports = document.getElementById('recentReports');
+            
+            if (appState.teacherReports.length === 0) {
+                recentReports.innerHTML = '<p class="text-gray-500 dark:text-gray-400">No reports sent today. Create your first daily report above.</p>';
+                return;
+            }
+
+            recentReports.innerHTML = appState.teacherReports.map(report => `
+                <div class="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                    <div class="flex justify-between items-start mb-2">
+                        <h4 class="font-semibold">${report.studentName}</h4>
+                        <span class="text-xs text-gray-500">${report.timestamp}</span>
+                    </div>
+                    <p class="text-sm text-gray-600 dark:text-gray-300 mb-2">${report.reportText}</p>
+                    <div class="flex justify-between items-center text-xs text-gray-500">
+                        <span>Subject: ${report.subject}</span>
+                        <span>Rating: ${report.rating}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function updateParentReports() {
+            const parentBoard = document.getElementById('parentActionBoard');
+            let currentContent = parentBoard.innerHTML;
+            
+            // Check if there's a teacher reports section already
+            if (!currentContent.includes('Teacher Reports')) {
+                // Add teacher reports section to parent page
+                const reportsSection = `
+                    <div class="mt-8 border-t border-gray-200 dark:border-gray-600 pt-6">
+                        <h4 class="text-lg font-semibold mb-4">📋 Teacher Reports</h4>
+                        <div id="parentTeacherReports" class="space-y-3">
+                            ${getTeacherReportsHTML()}
+                        </div>
+                    </div>
+                `;
+                
+                // If there's existing content (not the placeholder), append the reports
+                if (!currentContent.includes('No action items received yet')) {
+                    parentBoard.innerHTML = currentContent + reportsSection;
+                } else {
+                    parentBoard.innerHTML = reportsSection;
+                }
+            } else {
+                // Update existing teacher reports section
+                const reportsDiv = document.getElementById('parentTeacherReports');
+                if (reportsDiv) {
+                    reportsDiv.innerHTML = getTeacherReportsHTML();
+                }
+            }
+        }
+
+        function updateStudentReports() {
+            const studentBoard = document.getElementById('studentActionBoard');
+            let currentContent = studentBoard.innerHTML;
+            
+            // Check if there's a teacher reports section already
+            if (!currentContent.includes('Teacher Reports')) {
+                // Add teacher reports section to student page
+                const reportsSection = `
+                    <div class="mt-8 border-t border-gray-200 dark:border-gray-600 pt-6">
+                        <h4 class="text-lg font-semibold mb-4">📋 Daily Reports from Teacher</h4>
+                        <div id="studentTeacherReports" class="space-y-3">
+                            ${getTeacherReportsHTML()}
+                        </div>
+                    </div>
+                `;
+                
+                // If there's existing content (not the placeholder), append the reports
+                if (!currentContent.includes('No homework tasks yet')) {
+                    studentBoard.innerHTML = currentContent + reportsSection;
+                } else {
+                    studentBoard.innerHTML = reportsSection;
+                }
+            } else {
+                // Update existing teacher reports section
+                const reportsDiv = document.getElementById('studentTeacherReports');
+                if (reportsDiv) {
+                    reportsDiv.innerHTML = getTeacherReportsHTML();
+                }
+            }
+        }
+
+        function getTeacherReportsHTML() {
+            if (appState.teacherReports.length === 0) {
+                return '<p class="text-gray-500 dark:text-gray-400">No teacher reports yet.</p>';
+            }
+
+            return appState.teacherReports.map(report => `
+                <div class="p-4 bg-blue-50 dark:bg-blue-900/30 rounded-lg border-l-4 border-blue-500">
+                    <div class="flex justify-between items-start mb-2">
+                        <div class="flex items-center">
+                            <h5 class="font-semibold text-blue-800 dark:text-blue-200">${report.studentName}</h5>
+                            <span class="ml-2 text-xs px-2 py-1 bg-blue-200 dark:bg-blue-800 text-blue-800 dark:text-blue-200 rounded">${report.subject}</span>
+                        </div>
+                        <span class="text-xs text-gray-500">${report.date}</span>
+                    </div>
+                    <p class="text-sm text-gray-700 dark:text-gray-300 mb-2">${report.reportText}</p>
+                    <div class="text-xs text-blue-600 dark:text-blue-400">
+                        Performance: ${report.rating}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Virtual Classroom State
+        let classroomState = {
+            isJoined: false,
+            currentClass: null,
+            classmates: [],
+            projects: [],
+            chatMessages: []
+        };
+
+        // Classroom data
+        const classrooms = {
+            'ABC123': {
+                title: "Mrs. Johnson's 5th Grade",
+                subtitle: "📚 Language Arts & Science Projects",
+                teacher: "Mrs. Johnson",
+                classmates: ["Emma", "Alex", "Sophia", "Liam", "Maya", "Noah", "Zoe", "Oliver"],
+                projects: [
+                    {
+                        id: 1,
+                        title: "Solar System Model",
+                        description: "Create a 3D model of our solar system",
+                        members: ["Emma", "Alex", "Sophia"],
+                        progress: 75,
+                        emoji: "🪐"
+                    },
+                    {
+                        id: 2,
+                        title: "Story Writing",
+                        description: "Collaborative adventure story",
+                        members: ["Liam", "Maya"],
+                        progress: 45,
+                        emoji: "📖"
+                    }
+                ]
+            },
+            'XYZ789': {
+                title: "Mr. Smith's Science Class",
+                subtitle: "🔬 Chemistry & Physics Experiments",
+                teacher: "Mr. Smith",
+                classmates: ["Ava", "Ethan", "Isabella", "Lucas", "Mia", "Jackson", "Grace", "Aiden"],
+                projects: [
+                    {
+                        id: 3,
+                        title: "Volcano Experiment",
+                        description: "Chemical reaction demonstration",
+                        members: ["Ava", "Ethan"],
+                        progress: 30,
+                        emoji: "🌋"
+                    }
+                ]
+            },
+            'ART456': {
+                title: "Ms. Davis's Art Studio",
+                subtitle: "🎨 Creative Arts & Design",
+                teacher: "Ms. Davis",
+                classmates: ["Chloe", "Mason", "Lily", "Carter", "Aria", "Hunter", "Luna", "Eli"],
+                projects: [
+                    {
+                        id: 4,
+                        title: "Digital Art Gallery",
+                        description: "Virtual exhibition of student artwork",
+                        members: ["Chloe", "Mason", "Lily"],
+                        progress: 85,
+                        emoji: "🖼️"
+                    }
+                ]
+            }
+        };
+
+        // AI Study Buddy Handler
+        window.Poe.registerHandler("study-buddy-handler", (result, context) => {
+            const msg = result.responses[0];
+            const chatMessages = document.getElementById('chatMessages');
+            
+            if (msg.status === "error") {
+                addChatMessage("🤖 AI Study Buddy", "Sorry, I'm having trouble right now. Please try again!", "bot", true);
+            } else if (msg.status === "incomplete") {
+                // Update streaming response
+                const lastBotMessage = chatMessages.querySelector('.bot-message:last-child .message-content');
+                if (lastBotMessage) {
+                    lastBotMessage.textContent = msg.content;
+                }
+            } else if (msg.status === "complete") {
+                // Final response
+                const lastBotMessage = chatMessages.querySelector('.bot-message:last-child .message-content');
+                if (lastBotMessage) {
+                    lastBotMessage.textContent = msg.content;
+                }
+            }
+        });
+
+        // Join classroom
+        function joinClassroom() {
+            const code = document.getElementById('classroomCode').value.trim().toUpperCase();
+            
+            if (!code) {
+                showNotification('Please enter a classroom code!', 'error');
+                return;
+            }
+            
+            if (!classrooms[code]) {
+                showNotification('Invalid classroom code! Try ABC123, XYZ789, or ART456', 'error');
+                return;
+            }
+            
+            // Simulate API connection
+            showNotification('🔗 Connecting to classroom API...', 'info');
+            
+            setTimeout(() => {
+                classroomState.isJoined = true;
+                classroomState.currentClass = classrooms[code];
+                
+                // Update UI
+                document.getElementById('classroomJoin').classList.add('hidden');
+                document.getElementById('classroomMain').classList.remove('hidden');
+                
+                // Update classroom info
+                document.getElementById('classroomTitle').textContent = classroomState.currentClass.title;
+                document.getElementById('classroomSubtitle').textContent = classroomState.currentClass.subtitle;
+                document.getElementById('currentClassCode').textContent = code;
+                
+                // Load classmates and projects
+                loadClassmates();
+                loadProjects();
+                
+                createConfetti();
+                showNotification('🎉 Welcome to the classroom! Ready to collaborate!', 'success');
+            }, 1500);
+        }
+
+        // Load classmates
+        function loadClassmates() {
+            const classmatesList = document.getElementById('classmatesList');
+            const classmates = classroomState.currentClass.classmates;
+            
+            classmatesList.innerHTML = classmates.map((name, index) => {
+                const isOnline = Math.random() > 0.3; // Simulate online status
+                const avatarEmojis = ['👦', '👧', '🧒', '👨‍🎓', '👩‍🎓', '🧑‍🎓'];
+                const avatar = avatarEmojis[index % avatarEmojis.length];
+                
+                return `
+                    <div class="bg-gray-50 dark:bg-gray-700 rounded-2xl p-4 text-center ${isOnline ? 'border-2 border-green-400' : ''}">
+                        <div class="text-3xl mb-2">${avatar}</div>
+                        <div class="font-semibold text-sm">${name}</div>
+                        <div class="text-xs ${isOnline ? 'text-green-600' : 'text-gray-400'}">
+                            ${isOnline ? '🟢 Online' : '⚫ Offline'}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Load projects
+        function loadProjects() {
+            const activeProjects = document.getElementById('activeProjects');
+            const projects = classroomState.currentClass.projects;
+            
+            if (projects.length === 0) {
+                activeProjects.innerHTML = '<p class="text-gray-500 dark:text-gray-400 text-center py-8">No active projects yet. Create one to get started!</p>';
+                return;
+            }
+            
+            activeProjects.innerHTML = projects.map(project => `
+                <div class="bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-900 dark:to-purple-900 rounded-2xl p-4 border-2 border-blue-200 dark:border-blue-700">
+                    <div class="flex items-start justify-between mb-3">
+                        <div class="flex items-center">
+                            <span class="text-2xl mr-3">${project.emoji}</span>
+                            <div>
+                                <h4 class="font-bold text-blue-800 dark:text-blue-200">${project.title}</h4>
+                                <p class="text-xs text-blue-600 dark:text-blue-300">${project.description}</p>
+                            </div>
+                        </div>
+                        <button onclick="joinProject(${project.id})" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-full text-xs font-bold transition-colors">
+                            Join 🚀
+                        </button>
+                    </div>
+                    
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="flex -space-x-2">
+                            ${project.members.map(member => `
+                                <div class="w-6 h-6 bg-blue-400 rounded-full border-2 border-white flex items-center justify-center text-xs font-bold text-white">
+                                    ${member[0]}
+                                </div>
+                            `).join('')}
+                        </div>
+                        <span class="text-xs text-blue-600 dark:text-blue-300">${project.members.length} members</span>
+                    </div>
+                    
+                    <div class="w-full bg-blue-200 dark:bg-blue-800 rounded-full h-2 mb-2">
+                        <div class="bg-blue-500 h-2 rounded-full transition-all duration-500" style="width: ${project.progress}%"></div>
+                    </div>
+                    <div class="text-xs text-blue-600 dark:text-blue-300 text-center">${project.progress}% Complete</div>
+                </div>
+            `).join('');
+        }
+
+        // Create new project
+        function createProject() {
+            const title = prompt("🎨 What's your project title?");
+            if (!title) return;
+            
+            const description = prompt("📝 Brief description of your project:");
+            if (!description) return;
+            
+            const emojis = ['🎨', '🔬', '📚', '🎵', '⚽', '🌱', '🚀', '💻', '🏗️', '🌟'];
+            const emoji = emojis[Math.floor(Math.random() * emojis.length)];
+            
+            const newProject = {
+                id: Date.now(),
+                title: title,
+                description: description,
+                members: ["You"],
+                progress: 0,
+                emoji: emoji
+            };
+            
+            classroomState.currentClass.projects.push(newProject);
+            loadProjects();
+            createConfetti();
+            showNotification('🎉 New project created! Invite your classmates to join!', 'success');
+        }
+
+        // Join project
+        function joinProject(projectId) {
+            const project = classroomState.currentClass.projects.find(p => p.id === projectId);
+            if (project && !project.members.includes("You")) {
+                project.members.push("You");
+                loadProjects();
+                showNotification(`🎉 You joined "${project.title}"! Let's collaborate!`, 'success');
+            }
+        }
+
+        // Chat functions
+        function handleChatKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendChatMessage();
+            }
+        }
+
+        async function sendChatMessage() {
+            const input = document.getElementById('chatInput');
+            const message = input.value.trim();
+            
+            if (!message) return;
+            
+            // Add user message
+            addChatMessage("You", message, "user");
+            input.value = '';
+            
+            // Add loading message for bot
+            addChatMessage("🤖 AI Study Buddy", "Thinking...", "bot");
+            
+            try {
+                await window.Poe.sendUserMessage(
+                    `@Claude-Sonnet-4 You are a friendly AI Study Buddy helping students in a virtual classroom. The student is asking: "${message}". Please provide a helpful, encouraging response suitable for elementary/middle school students. Keep it fun and educational! If it's about a school project, give creative ideas and tips.`,
+                    {
+                        handler: "study-buddy-handler",
+                        stream: true,
+                        openChat: false
+                    }
+                );
+            } catch (err) {
+                addChatMessage("🤖 AI Study Buddy", "Sorry, I'm having trouble right now. Please try again!", "bot", true);
+            }
+        }
+
+        function addChatMessage(sender, message, type, isError = false) {
+            const chatMessages = document.getElementById('chatMessages');
+            
+            // Remove placeholder text
+            if (chatMessages.innerHTML.includes('Start a conversation')) {
+                chatMessages.innerHTML = '';
+            }
+            
+            // Remove previous loading message if this is a bot response
+            if (type === 'bot') {
+                const lastBotMessage = chatMessages.querySelector('.bot-message:last-child');
+                if (lastBotMessage && lastBotMessage.textContent.includes('Thinking...')) {
+                    lastBotMessage.remove();
+                }
+            }
+            
+            const messageEl = document.createElement('div');
+            messageEl.className = `mb-3 ${type}-message`;
+            
+            const bgColor = type === 'user' ? 'bg-primary text-white ml-8' : 'bg-white dark:bg-gray-600 mr-8';
+            const alignment = type === 'user' ? 'text-right' : 'text-left';
+            
+            messageEl.innerHTML = `
+                <div class="${alignment}">
+                    <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">${sender}</div>
+                    <div class="${bgColor} rounded-2xl px-4 py-3 inline-block max-w-xs">
+                        <div class="message-content text-sm">${message}</div>
+                    </div>
+                </div>
+            `;
+            
+            chatMessages.appendChild(messageEl);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        // Leave classroom
+        function leaveClassroom() {
+            if (confirm('Are you sure you want to leave the classroom?')) {
+                classroomState.isJoined = false;
+                classroomState.currentClass = null;
+                
+                document.getElementById('classroomMain').classList.add('hidden');
+                document.getElementById('classroomJoin').classList.remove('hidden');
+                document.getElementById('classroomCode').value = '';
+                
+                // Clear chat
+                document.getElementById('chatMessages').innerHTML = `
+                    <div class="text-center text-gray-500 dark:text-gray-400 text-sm">
+                        💬 Start a conversation with your AI Study Buddy!
+                    </div>
+                `;
+                
+                showNotification('👋 You left the classroom. Come back anytime!', 'info');
+            }
+        }
+
+        // Initialize the app
+        showPage('homepage');
+    </script>
+</body>
+</html>
